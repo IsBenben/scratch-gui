@@ -63,7 +63,8 @@ const base = {
         publicPath: root
     },
     resolve: {
-        symlinks: false,
+        // Follow pnpm links so each package resolves its own dependency versions.
+        symlinks: true,
         alias: {
             'text-encoding$': path.resolve(__dirname, 'src/lib/tw-text-encoder'),
             'scratch-render-fonts$': path.resolve(__dirname, 'src/lib/tw-scratch-render-fonts')
@@ -75,6 +76,7 @@ const base = {
             loader: 'babel-loader',
             include: [
                 path.resolve(__dirname, 'src'),
+                path.resolve(__dirname, '../scratch-paint/src'),
                 /node_modules[\\/]scratch-[^\\/]+[\\/]src/,
                 /node_modules[\\/]pify/,
                 /node_modules[\\/]@vernier[\\/]godirect/

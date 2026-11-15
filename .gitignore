@@ -21,7 +21,7 @@ npm-*
 # Other generated source
 /src/generated
 
-# Downloaded during "npm install"
+# Downloaded by the pnpm prepare lifecycle
 /static/microbit
 
 # for act

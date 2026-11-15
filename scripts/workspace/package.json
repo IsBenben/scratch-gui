@@ -1,0 +1,10 @@
+{
+  "name": "scratch-editor-workspace",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "prepare": "pnpm --filter scratch-gui run prepare",
+    "build": "pnpm --filter scratch-gui run build",
+    "test": "pnpm --filter scratch-gui run test:unit && pnpm --filter scratch-paint run test --runInBand"
+  }
+}

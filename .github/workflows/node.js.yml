@@ -11,16 +11,35 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
+        path: scratch-gui
         persist-credentials: false
-    - name: Install pnpm
-      uses: pnpm/action-setup@v4
+    - name: Read paint revision
+      id: paint
+      run: echo "revision=$(cat scratch-gui/scripts/workspace/paint-revision.txt)" >> "$GITHUB_OUTPUT"
+    - uses: actions/checkout@v4
       with:
-        version: 10
-    - name: Install Node.js
+        repository: TurboWarp/scratch-paint
+        ref: ${{ steps.paint.outputs.revision }}
+        path: scratch-paint
+        persist-credentials: false
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10.33.0
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24.18.0
+    - name: Configure workspace and apply paint patch
+      run: node scratch-gui/scripts/setup-workspace.mjs
+    - name: Cache pnpm store
       uses: actions/setup-node@v4
       with:
-        node-version: 22
+        node-version: 24.18.0
         cache: pnpm
+        cache-dependency-path: scratch-gui/pnpm-lock.yaml
     - run: pnpm install --frozen-lockfile
-    - run: pnpm run build
-    - run: pnpm run test:unit
+    - run: pnpm --filter scratch-gui run prepare
+    - run: pnpm --filter scratch-gui run build
+    - run: pnpm --filter scratch-gui run test:unit
+    - run: pnpm --filter scratch-gui run test:pickers:browser
+    - run: pnpm --filter scratch-paint run build
+    - run: pnpm --filter scratch-paint run test --runInBand

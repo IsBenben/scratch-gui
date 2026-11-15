@@ -1,0 +1,21 @@
+.blocklyDropDownDiv .goog-slider-horizontal .goog-slider-thumb,
+.blocklyDropDownDiv .goog-slider-horizontal,
+.Popover-body [class*="slider_container_"],
+.Popover-body [class*="slider_container_"] > [class*="slider_handle_"] {
+  cursor: ew-resize;
+}
+
+.sa-2dcolor-picker,
+.sa-2dcolor-picker * {
+  cursor: move;
+}
+
+.sa-2dcolor-picker[data-sa-color-picker-axis="x"],
+.sa-2dcolor-picker[data-sa-color-picker-axis="x"] * {
+  cursor: ew-resize;
+}
+
+.sa-2dcolor-picker[data-sa-color-picker-axis="y"],
+.sa-2dcolor-picker[data-sa-color-picker-axis="y"] * {
+  cursor: ns-resize;
+}

@@ -20,6 +20,7 @@ const addons = [
     'clones',
     'mouse-pos',
     'color-picker',
+    'better-color-picker',
     'remove-sprite-confirm',
     'block-count',
     'onion-skinning',

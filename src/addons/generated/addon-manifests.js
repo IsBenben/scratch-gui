@@ -18,6 +18,7 @@ import _vol_slider from "../addons/vol-slider/_manifest_entry.js";
 import _clones from "../addons/clones/_manifest_entry.js";
 import _mouse_pos from "../addons/mouse-pos/_manifest_entry.js";
 import _color_picker from "../addons/color-picker/_manifest_entry.js";
+import _better_color_picker from "../addons/better-color-picker/_manifest_entry.js";
 import _remove_sprite_confirm from "../addons/remove-sprite-confirm/_manifest_entry.js";
 import _block_count from "../addons/block-count/_manifest_entry.js";
 import _onion_skinning from "../addons/onion-skinning/_manifest_entry.js";
@@ -100,6 +101,7 @@ export default {
   "clones": _clones,
   "mouse-pos": _mouse_pos,
   "color-picker": _color_picker,
+  "better-color-picker": _better_color_picker,
   "remove-sprite-confirm": _remove_sprite_confirm,
   "block-count": _block_count,
   "onion-skinning": _onion_skinning,

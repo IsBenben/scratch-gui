@@ -1,0 +1,7 @@
+.blocklyDropDownDiv .goog-slider-horizontal .goog-slider-thumb,
+.Popover-body [class*="slider_container_"] > [class*="slider_handle_"],
+.sa-2dcolor-picker > [class*="slider_handle"],
+.sa-2dcolor-picker > .sa-code-color-picker-handle {
+  background-color: var(--sa-better-color-picker-handle-color, white);
+  box-shadow: 0 0 0 4px var(--sa-better-color-picker-handle-shadow, rgba(0, 0, 0, 0.15));
+}

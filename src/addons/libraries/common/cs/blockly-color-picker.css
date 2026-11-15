@@ -1,0 +1,52 @@
+.blocklyDropDownDiv .sa-color-picker-readout {
+  box-sizing: border-box;
+  width: 40px;
+  height: 20px;
+  margin-inline-start: 6px;
+  padding: 0 2px;
+  text-align: center;
+  font: inherit;
+  font-weight: bold;
+}
+
+.blocklyDropDownContent.sa-code-color-picker-active {
+  max-height: min(420px, 70vh);
+}
+
+.sa-code-color-picker-active {
+  min-width: 190px;
+}
+
+.sa-code-color-picker-active .goog-slider-horizontal {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sa-code-color-picker-active .scratchColourPickerLabel {
+  display: flex;
+  align-items: center;
+}
+
+.sa-code-color-picker-active .scratchColourPickerLabelText {
+  flex: 0 0 auto;
+}
+
+.sa-code-color-picker-active .goog-slider-horizontal {
+  touch-action: none;
+}
+
+.sa-2dcolor-picker > .sa-code-color-picker-handle {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 100%;
+  background-color: var(--sa-better-color-picker-handle-color, white);
+  box-shadow: 0 0 0 4px var(--sa-better-color-picker-handle-shadow, rgba(0, 0, 0, 0.15));
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.blocklyDropDownDiv .sa-2dcolor-picker {
+  touch-action: none;
+  margin: 16px auto;
+}

@@ -1,0 +1,15 @@
+packages:
+  - scratch-gui
+  - scratch-paint
+onlyBuiltDependencies:
+  - core-js
+  - scratch-blocks
+  - canvas
+overrides:
+  webpack@4.47.0>terser-webpack-plugin: ^4.2.3
+  enzyme>cheerio: 1.0.0-rc.12
+peerDependencyRules:
+  allowedVersions:
+    # This git dependency declares version 1.0.0, which pnpm cannot compare to a git peer spec.
+    '@turbowarp/scratch-svg-renderer>scratch-render-fonts': '*'
+    'jsdom>canvas': '^3.2.0'
