@@ -5,6 +5,8 @@ import React from 'react';
 import CustomProceduresComponent from '../components/custom-procedures/custom-procedures.jsx';
 import LazyScratchBlocks from '../lib/tw-lazy-scratch-blocks';
 import {connect} from 'react-redux';
+import {colorPalette} from '../lib/project-block-colors';
+import {applyBlockPalette} from '../lib/project-block-color-renderer';
 
 class CustomProcedures extends React.Component {
     constructor (props) {
@@ -14,14 +16,23 @@ class CustomProcedures extends React.Component {
             'handleAddBoolean',
             'handleAddTextNumber',
             'handleToggleWarp',
+            'handleColorChange',
+            'handleSecondaryColorChange',
+            'handleResetTextColor',
+            'handleToggleSecondaryColor',
             'handleCancel',
             'handleOk',
             'setBlocks'
         ]);
         this.state = {
+            color: props.color,
+            colors: props.colors || {},
+            customSecondaryColor: Boolean(props.colors),
             rtlOffset: 0,
             warp: false
         };
+        this.handlePaletteChange = Object.fromEntries(['secondary', 'tertiary', 'quaternary', 'text']
+            .map(name => [name, color => this.handleSecondaryColorChange(name, color)]));
     }
     componentWillUnmount () {
         if (this.workspace) {
@@ -53,6 +64,7 @@ class CustomProcedures extends React.Component {
 
         this.workspace.addChangeListener(() => {
             this.mutationRoot.onChangeFn();
+            this.updatePreview();
             // Keep the block centered on the workspace
             const metrics = this.workspace.getMetrics();
             const {x, y} = this.mutationRoot.getRelativeToSurfaceXY();
@@ -104,6 +116,7 @@ class CustomProcedures extends React.Component {
         this.mutationRoot.domToMutation(this.props.mutator);
         this.mutationRoot.initSvg();
         this.mutationRoot.render();
+        this.updatePreview();
         this.setState({warp: this.mutationRoot.getWarp()});
         // Allow the initial events to run to position this block, then focus.
         setTimeout(() => {
@@ -113,9 +126,40 @@ class CustomProcedures extends React.Component {
     handleCancel () {
         this.props.onRequestClose();
     }
+    handleColorChange (color) {
+        this.setState({color}, () => this.updatePreview());
+    }
+    handleToggleSecondaryColor () {
+        this.setState(state => {
+            const {secondary, tertiary, quaternary} = colorPalette(state.color, state.colors);
+            return {customSecondaryColor: !state.customSecondaryColor,
+                colors: {...state.colors, secondary, tertiary, quaternary}};
+        }, () => this.updatePreview());
+    }
+    handleSecondaryColorChange (name, color) {
+        this.setState(state => ({colors: {...state.colors, [name]: color}}), () => this.updatePreview());
+    }
+    handleResetTextColor () {
+        this.setState(state => {
+            const colors = {...state.colors};
+            delete colors.text;
+            return {colors};
+        }, () => this.updatePreview());
+    }
+    updatePreview () {
+        if (!this.mutationRoot) return;
+        const Blockly = LazyScratchBlocks.get();
+        const entry = {color: this.state.color,
+            colors: this.state.customSecondaryColor ? this.state.colors : {}};
+        applyBlockPalette(this.mutationRoot, entry, Blockly);
+        for (const block of this.mutationRoot.getDescendants()) {
+            if (block.type.startsWith('argument_')) applyBlockPalette(block, entry, Blockly);
+        }
+    }
     handleOk () {
         const newMutation = this.mutationRoot ? this.mutationRoot.mutationToDom(true) : null;
-        this.props.onRequestClose(newMutation);
+        this.props.onRequestClose(newMutation, this.state.color,
+            this.state.customSecondaryColor ? this.state.colors : null);
     }
     handleAddLabel () {
         if (this.mutationRoot) {
@@ -142,6 +186,13 @@ class CustomProcedures extends React.Component {
     render () {
         return (
             <CustomProceduresComponent
+                color={this.state.color}
+                customSecondaryColor={this.state.customSecondaryColor}
+                colors={this.state.colors}
+                onResetTextColor={this.handleResetTextColor}
+                onPaletteChange={this.handlePaletteChange}
+                onToggleSecondaryColor={this.handleToggleSecondaryColor}
+                onColorChange={this.handleColorChange}
                 componentRef={this.setBlocks}
                 warp={this.state.warp}
                 onAddBoolean={this.handleAddBoolean}
@@ -156,6 +207,8 @@ class CustomProcedures extends React.Component {
 }
 
 CustomProcedures.propTypes = {
+    color: PropTypes.string.isRequired,
+    colors: PropTypes.objectOf(PropTypes.string),
     isRtl: PropTypes.bool,
     mutator: PropTypes.instanceOf(Element),
     onRequestClose: PropTypes.func.isRequired,

@@ -1,0 +1,18 @@
+.option {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.palette {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 1rem;
+    font-size: 0.875rem;
+}
+
+.palette > div {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+}

@@ -9,12 +9,18 @@ import textInputIcon from './icon--text-input.svg';
 import labelIcon from './icon--label.svg';
 
 import styles from './custom-procedures.css';
+import ProjectColorControls from '../project-color-input/project-color-controls.jsx';
 
 const messages = defineMessages({
     myblockModalTitle: {
         defaultMessage: 'Make a Block',
         description: 'Title for the modal where you create a custom block.',
         id: 'gui.customProcedures.myblockModalTitle'
+    },
+    blockColor: {
+        defaultMessage: 'Block color',
+        description: 'Color of the definition and calls of this custom block',
+        id: 'gui.customProcedures.blockColor'
     }
 });
 
@@ -103,6 +109,16 @@ const CustomProcedures = props => (
                     </div>
                 </div>
             </div>
+            <ProjectColorControls
+                color={props.color}
+                colors={props.colors}
+                customColors={props.customSecondaryColor}
+                label={props.intl.formatMessage(messages.blockColor)}
+                onColorChange={props.onColorChange}
+                onPaletteChange={props.onPaletteChange}
+                onResetTextColor={props.onResetTextColor}
+                onToggleColors={props.onToggleSecondaryColor}
+            />
             <div className={styles.checkboxRow}>
                 <label>
                     <input
@@ -144,6 +160,13 @@ const CustomProcedures = props => (
 );
 
 CustomProcedures.propTypes = {
+    color: PropTypes.string.isRequired,
+    customSecondaryColor: PropTypes.bool.isRequired,
+    colors: PropTypes.objectOf(PropTypes.string).isRequired,
+    onResetTextColor: PropTypes.func.isRequired,
+    onPaletteChange: PropTypes.objectOf(PropTypes.func).isRequired,
+    onToggleSecondaryColor: PropTypes.func.isRequired,
+    onColorChange: PropTypes.func.isRequired,
     componentRef: PropTypes.func.isRequired,
     intl: intlShape,
     onAddBoolean: PropTypes.func.isRequired,

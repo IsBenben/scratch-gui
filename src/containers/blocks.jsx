@@ -44,6 +44,8 @@ import AddonHooks from '../addons/hooks.js';
 import LoadScratchBlocksHOC from '../lib/tw-load-scratch-blocks-hoc.jsx';
 import {findTopBlock} from '../lib/backpack/code-payload.js';
 import {gentlyRequestPersistentStorage} from '../lib/tw-persistent-storage.js';
+import getProjectBlockColors, {DEFAULT_COLORS} from '../lib/project-block-colors';
+import ProjectBlockColorRenderer from '../lib/project-block-color-renderer';
 
 // TW: Strings we add to scratch-blocks are localized here
 const messages = defineMessages({
@@ -109,6 +111,7 @@ class Blocks extends React.Component {
             'handlePromptCallback',
             'handlePromptClose',
             'handleCustomProceduresClose',
+            'handleCustomProceduresStart',
             'onScriptGlowOn',
             'onScriptGlowOff',
             'onBlockGlowOn',
@@ -141,7 +144,29 @@ class Blocks extends React.Component {
         this.ScratchBlocks.recordSoundCallback = this.handleOpenSoundRecorder;
 
         this.ScratchBlocks.FieldColourSlider.activateEyedropper_ = this.props.onActivateColorPicker;
-        this.ScratchBlocks.Procedures.externalProcedureDefCallback = this.props.onActivateCustomProcedures;
+        this.ScratchBlocks.Procedures.externalProcedureDefCallback = this.handleCustomProceduresStart;
+        this.projectColors = getProjectBlockColors(this.props.vm);
+        const renameVariable = this.ScratchBlocks.Variables.renameVariable;
+        this.ScratchBlocks.Variables.renameVariable = (workspace, variable, ...args) => {
+            this.colorEditingVariable = variable;
+            try {
+                return renameVariable.call(this.ScratchBlocks.Variables, workspace, variable, ...args);
+            } finally {
+                this.colorEditingVariable = null;
+            }
+        };
+        const editProcedure = this.ScratchBlocks.Procedures.editProcedureCallback_;
+        this.ScratchBlocks.Procedures.editProcedureCallback_ = block => {
+            const prototype = block.type === 'procedures_definition' ?
+                block.getInputTargetBlock('custom_block') : block;
+            this.colorEditingProcedure = this.projectColors.definitionId(this.props.vm.editingTarget,
+                prototype.getProcCode());
+            try {
+                return editProcedure.call(this.ScratchBlocks.Procedures, block);
+            } finally {
+                this.colorEditingProcedure = null;
+            }
+        };
         this.ScratchBlocks.ScratchMsgs.setLocale(this.props.locale);
 
         const Msg = this.ScratchBlocks.Msg;
@@ -217,6 +242,7 @@ class Blocks extends React.Component {
         });
 
         this.attachVM();
+        this.colorRenderer = new ProjectBlockColorRenderer(this.projectColors, this.ScratchBlocks, this.workspace);
         // Only update blocks/vm locale when visible to avoid sizing issues
         // If locale changes while not visible it will get handled in didUpdate
         if (this.props.isVisible) {
@@ -285,6 +311,7 @@ class Blocks extends React.Component {
         }
     }
     componentWillUnmount () {
+        this.colorRenderer.dispose();
         this.detachVM();
         this.unmounted = true;
         this.workspace.dispose();
@@ -339,6 +366,7 @@ class Blocks extends React.Component {
         const queue = this.toolboxUpdateQueue;
         this.toolboxUpdateQueue = [];
         queue.forEach(fn => fn());
+        this.colorRenderer.update();
     }
 
     withToolboxUpdates (fn) {
@@ -493,6 +521,9 @@ class Blocks extends React.Component {
             }
             log.error(error);
         }
+        // Rebuilding SVG blocks must not delete/recreate their VM counterparts or
+        // discard ID-keyed colors. Deliver the queued rebuild events while detached.
+        this.ScratchBlocks.Events.fireNow_();
         this.workspace.addChangeListener(this.props.vm.blockListener);
 
         if (this.props.vm.editingTarget && this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id]) {
@@ -507,6 +538,9 @@ class Blocks extends React.Component {
         // fresh workspace and we don't want any changes made to another sprites
         // workspace to be 'undone' here.
         this.workspace.clearUndo();
+        this.projectColors.refresh();
+        this.colorRenderer.resetInventory();
+        this.colorRenderer.update();
     }
     handleMonitorsUpdate (monitors) {
         // Update the checkboxes of the relevant monitors.
@@ -600,6 +634,12 @@ class Blocks extends React.Component {
             p.prompt.title !== this.ScratchBlocks.Msg.RENAME_VARIABLE_MODAL_TITLE &&
             p.prompt.title !== this.ScratchBlocks.Msg.RENAME_LIST_MODAL_TITLE;
         p.prompt.showCloudOption = (optVarType === this.ScratchBlocks.SCALAR_VARIABLE_TYPE) && this.props.canUseCloud;
+        p.prompt.colorKind = p.prompt.varType === this.ScratchBlocks.LIST_VARIABLE_TYPE ? 'lists' : 'variables';
+        p.prompt.showColor = p.prompt.varType !== this.ScratchBlocks.BROADCAST_MESSAGE_VARIABLE_TYPE;
+        p.prompt.variableId = this.colorEditingVariable && this.colorEditingVariable.getId();
+        p.prompt.color = this.projectColors.get(p.prompt.colorKind, p.prompt.variableId) ||
+            DEFAULT_COLORS[p.prompt.colorKind];
+        p.prompt.colors = this.projectColors.getEntry(p.prompt.colorKind, p.prompt.variableId)?.colors;
         this.setState(p);
     }
     handleConnectionModalStart (extensionId) {
@@ -618,17 +658,37 @@ class Blocks extends React.Component {
      * to the variable validation prompt callback used in scratch-blocks.
      */
     handlePromptCallback (input, variableOptions) {
-        this.state.prompt.callback(
+        const prompt = this.state.prompt;
+        const before = new Set(this.workspace.getAllVariables().map(variable => variable.getId()));
+        prompt.callback(
             input,
             this.props.vm.runtime.getAllVarNamesOfType(this.state.prompt.varType),
             variableOptions);
+        // Flush native variable events before persisting the new variable's stable ID.
+        this.ScratchBlocks.Events.fireNow_();
+        const created = this.workspace.getAllVariables().find(variable => !before.has(variable.getId()));
+        const id = prompt.variableId || (created && created.getId());
+        if (prompt.showColor && id) {
+            this.projectColors.set(prompt.colorKind, id, variableOptions.color, variableOptions.colors);
+        }
         this.handlePromptClose();
     }
     handlePromptClose () {
         this.setState({prompt: null});
     }
-    handleCustomProceduresClose (data) {
+    handleCustomProceduresStart (mutator, callback) {
+        this.procedureColorId = this.colorEditingProcedure;
+        this.procedureDefinitionsBefore = new Set(this.workspace.getAllBlocks()
+            .filter(block => block.type === 'procedures_definition')
+            .map(block => block.id));
+        this.props.onActivateCustomProcedures(mutator, callback);
+    }
+    handleCustomProceduresClose (data, color, colors) {
         this.props.onRequestCloseCustomProcedures(data);
+        this.ScratchBlocks.Events.fireNow_();
+        const created = this.workspace.getAllBlocks().find(block => block.type === 'procedures_definition' &&
+            !this.procedureDefinitionsBefore.has(block.id));
+        if (data) this.projectColors.set('procedures', this.procedureColorId || (created && created.id), color, colors);
         const ws = this.workspace;
         ws.refreshToolboxSelection_();
         ws.toolbox_.scrollToCategoryById('myBlocks');
@@ -700,6 +760,9 @@ class Blocks extends React.Component {
                 />
                 {this.state.prompt ? (
                     <Prompt
+                        color={this.state.prompt.color}
+                        colors={this.state.prompt.colors}
+                        showColor={this.state.prompt.showColor}
                         defaultValue={this.state.prompt.defaultValue}
                         isStage={vm.runtime.getEditingTarget().isStage}
                         showListMessage={this.state.prompt.varType === this.ScratchBlocks.LIST_VARIABLE_TYPE}
@@ -723,6 +786,8 @@ class Blocks extends React.Component {
                 ) : null}
                 {customProceduresVisible ? (
                     <CustomProcedures
+                        color={this.projectColors.get('procedures', this.procedureColorId) || DEFAULT_COLORS.procedures}
+                        colors={this.projectColors.getEntry('procedures', this.procedureColorId)?.colors}
                         options={{
                             media: options.media
                         }}

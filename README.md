@@ -38,7 +38,11 @@ After building, run `pnpm run test:pickers:browser` from GUI for the real browse
 
 More TurboWarp development information: https://docs.turbowarp.org/development/getting-started
 
-Validated with Node.js 24.18.0 and pnpm 10.33.0: frozen installation with lifecycle scripts, manual prepare, both builds, 46 GUI unit tests, and all 63 paint unit tests passed. The paint patch and both lockfile layouts were also checked in clean checkouts. Paint lint passed with Linux-style LF line endings; GUI still has 39 existing lint errors outside these changes. Real Chrome checks cover both pickers, Ctrl dragging, horizontal and vertical scrolling, 2D scrolling, input layout, HSV retention, and dynamic handle colors. Hosted CI has not been run.
+Variable, list, and custom block palette controls, persistence, drag behavior, and sprite/backpack transfer are described in [Project block colors](docs/project-block-colors.md).
+
+The pnpm migration was validated with Node.js 24.18.0 and pnpm 10.33.0: frozen installation with lifecycle scripts, manual prepare, both builds, and all 63 paint unit tests passed. The paint patch and both lockfile layouts were also checked in clean checkouts. Paint lint passed with Linux-style LF line endings.
+
+The current color changes were validated with Node.js 24.22.3 and pnpm 10.33.0: the GUI build, all 67 GUI unit tests, and the complete Chrome regression passed. Browser checks cover both pickers, Ctrl/wheel input, palette controls, native duplication and dragging, sprite/backpack transfers, same-name destination priority, workspace rebuilding, actual `.sb3`/`project.json` short-ID serialization, metadata precedence, and comment fallback/deletion. GUI still has 39 existing lint errors; hosted CI has not been run.
 
 ## License
 

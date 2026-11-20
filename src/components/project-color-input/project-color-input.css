@@ -1,0 +1,28 @@
+@import "../../css/colors.css";
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 0 1rem;
+    font-weight: normal;
+}
+
+.row .row {
+    margin: 0;
+}
+
+.swatch {
+    width: 2.5rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 1px solid $ui-black-transparent;
+    border-radius: 0.35rem;
+    cursor: pointer;
+}
+
+.swatch:focus-visible {
+    outline: 2px solid $looks-secondary;
+    outline-offset: 2px;
+}

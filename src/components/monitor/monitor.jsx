@@ -11,6 +11,7 @@ import LargeMonitor from './large-monitor.jsx';
 import SliderMonitor from '../../containers/slider-monitor.jsx';
 import ListMonitor from '../../containers/list-monitor.jsx';
 import {Theme} from '../../lib/themes/index.js';
+import {colorPalette} from '../../lib/project-block-colors';
 
 import styles from './monitor.css';
 
@@ -65,7 +66,10 @@ const MonitorComponent = props => (
                 data-opcode={props.opcode}
             >
                 {React.createElement(modes[props.mode], {
-                    categoryColor: getCategoryColor(props.theme, props.category),
+                    categoryColor: props.customColor ? {
+                        background: props.customColor,
+                        text: colorPalette(props.customColor, props.customColors).text
+                    } : getCategoryColor(props.theme, props.category),
                     ...props
                 })}
             </Box>
@@ -141,6 +145,8 @@ const MonitorComponent = props => (
 const monitorModes = Object.keys(modes);
 
 MonitorComponent.propTypes = {
+    customColor: PropTypes.string,
+    customColors: PropTypes.objectOf(PropTypes.string),
     category: PropTypes.oneOf(Object.keys(categoryColorMap)),
     componentRef: PropTypes.func.isRequired,
     draggable: PropTypes.bool.isRequired,

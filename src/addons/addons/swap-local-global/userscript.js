@@ -331,9 +331,13 @@ export default async function ({ addon, msg, console }) {
       isAnythingConfigurable = true;
       root.appendChild(scopeSection);
     }
+    let colorSection = promptBody.querySelector("[data-project-color-controls], [data-project-color-input]");
+    // insertBefore requires a direct child. Palette controls contain nested swatch rows.
+    while (colorSection && colorSection.parentElement !== promptBody) colorSection = colorSection.parentElement;
+    const separateCloud = variable.type === "" && canUserUseCloudVariables() && colorSection;
     if (variable.type === "" && canUserUseCloudVariables()) {
       isAnythingConfigurable = true;
-      root.appendChild(cloudSection);
+      if (!separateCloud) root.appendChild(cloudSection);
     }
     if (isAnythingConfigurable) {
       root.prepend(
@@ -343,7 +347,11 @@ export default async function ({ addon, msg, console }) {
         })
       );
     }
-    promptBody.insertBefore(root, promptBody.lastChild);
+    promptBody.insertBefore(root, colorSection || promptBody.lastChild);
+    if (separateCloud) {
+      addon.tab.displayNoneWhileDisabled(cloudSection);
+      promptBody.insertBefore(cloudSection, promptBody.lastChild);
+    }
 
     return {
       isLocal: () => forThisSpriteOnly.input.checked,
@@ -354,6 +362,8 @@ export default async function ({ addon, msg, console }) {
   // https://github.com/scratchfoundation/scratch-blocks/blob/c5014f61e2e538e99601a9e0cb39e339e44c3910/core/variables.js#L470
   const originalRenameVariable = ScratchBlocks.Variables.renameVariable;
   ScratchBlocks.Variables.renameVariable = function (workspace, variable, opt_callback) {
+    let prompt;
+    ScratchBlocks.hideChaff();
     const ret = originalRenameVariable.call(this, workspace, variable, (...args) => {
       if (opt_callback) {
         opt_callback(...args);
@@ -362,7 +372,7 @@ export default async function ({ addon, msg, console }) {
         convertVariable(variable, prompt.isLocal(), prompt.isCloud());
       }
     });
-    const prompt = addMoreOptionsToPrompt(variable);
+    prompt = addMoreOptionsToPrompt(variable);
     return ret;
   };
 

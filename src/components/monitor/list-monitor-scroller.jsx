@@ -86,6 +86,7 @@ class ListMonitorScroller extends React.Component {
         const scrollToIndex = activeIndex === null ? undefined : activeIndex; /* eslint-disable-line no-undefined */
         return (
             <List
+                categoryColor={this.props.categoryColor}
                 activeIndex={activeIndex}
                 activeValue={activeValue}
                 height={(height) - 42 /* Header/footer size, approx */}

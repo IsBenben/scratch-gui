@@ -5,6 +5,31 @@
     width: 360px;
 }
 
+.modal-content.color-modal {
+    display: flex;
+    width: 750px;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 4rem);
+    margin: 2rem auto;
+}
+
+.color-modal > div {
+    display: flex;
+    flex-direction: column;
+    max-height: inherit;
+    min-height: 0;
+}
+
+.color-modal > div > :first-child {
+    flex-shrink: 0;
+}
+
+.color-modal .body {
+    min-height: 0;
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+
 .body {
     background: $ui-modal-background;
     padding: 1.5rem 2.25rem;
@@ -46,7 +71,10 @@
 .options-row {
     display: flex;
     font-weight: normal;
-    justify-content: space-between;
+    justify-content: flex-start;
+    column-gap: 45px;
+    row-gap: 0.5rem;
+    flex-wrap: wrap;
     margin-bottom: 1.5rem;
 }
 

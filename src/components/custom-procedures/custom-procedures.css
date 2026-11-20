@@ -2,13 +2,30 @@
 @import "../../css/units.css";
 
 .modal-content {
-    width: 700px;
-    margin: 50px auto; /* This modal is taller than most, reduce top margin */
+    display: flex;
+    width: 750px;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 4rem);
+    margin: 2rem auto;
+}
+
+.modal-content > div {
+    display: flex;
+    flex-direction: column;
+    max-height: inherit;
+    min-height: 0;
+}
+
+.modal-content > div > :first-child {
+    flex-shrink: 0;
 }
 
 .body {
     background: $ui-modal-background;
     padding: 1.5rem 2.25rem;
+    min-height: 0;
+    overflow-y: auto;
+    flex: 1 1 auto;
 }
 
 .body input[type="checkbox"],
@@ -18,7 +35,8 @@
 
 /* Blocks workspace for custom procedure declaration editor */
 .workspace {
-    min-height: 200px;
+    flex: 0 0 clamp(120px, 24vh, 200px);
+    min-height: 120px;
     position: relative;
 }
 
@@ -37,10 +55,13 @@
 /* Row of "card" buttons for modifying custom procedures */
 .options-row {
     display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
     justify-content: space-between;
 }
 
 .option-card {
+    min-width: 0;
     background: $ui-white;
     border: 2px solid $ui-black-transparent;
     border-radius: $space;
@@ -55,10 +76,6 @@
 .option-card:hover {
     border: 2px solid $looks-secondary;
     box-shadow: 0px 0px 0px 4px $looks-transparent;
-}
-
-.option-card + .option-card {
-    margin-left: 1rem;
 }
 
 .option-icon {

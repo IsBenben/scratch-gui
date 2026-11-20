@@ -5,6 +5,7 @@ import os from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {spawn} from 'node:child_process';
 import assert from 'node:assert/strict';
+import verifyProjectBlockColors from './verify-project-block-colors.mjs';
 
 // Run after pnpm run build. Uses an installed Chrome, with no browser download.
 const workspace = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -51,21 +52,36 @@ try {
   await new Promise((resolve, reject) => { socket.onopen = resolve; socket.onerror = reject; });
   let serial = 0;
   const pending = new Map();
+  const dialogs = [];
   socket.onmessage = event => {
     const result = JSON.parse(event.data);
     if (!result.id) {
+      if (result.method === 'Page.javascriptDialogOpening') {
+        dialogs.push(result.params.message);
+        commands('Page.handleJavaScriptDialog', {accept: false}).catch(() => {});
+      }
       if (result.method === 'Runtime.exceptionThrown') console.log('Browser exception:', result.params.exceptionDetails.exception?.description?.split('\n')[0]);
-      if (result.method === 'Runtime.consoleAPICalled' && result.params.type === 'error') console.log('Browser error:', JSON.stringify(result.params.args));
+      if (result.method === 'Runtime.consoleAPICalled' && result.params.type === 'error') {
+        console.log('Browser error:', result.params.args.map(arg => String(arg.value ?? arg.description).split('\n')[0]));
+      }
       return;
     }
     const callbacks = pending.get(result.id);
     pending.delete(result.id);
+    if (!callbacks) return;
     if (result.error) callbacks.reject(new Error(JSON.stringify(result.error)));
     else callbacks.resolve(result.result);
   };
   commands = (method, params = {}) => new Promise((resolve, reject) => {
     const id = ++serial;
-    pending.set(id, {resolve, reject});
+    const timeout = setTimeout(() => {
+      pending.delete(id);
+      reject(new Error(`Browser command timed out: ${method}`));
+    }, 30000);
+    pending.set(id, {
+      resolve: result => {clearTimeout(timeout); resolve(result);},
+      reject: error => {clearTimeout(timeout); reject(error);}
+    });
     socket.send(JSON.stringify({id, method, params}));
   });
   const evaluate = async expression => {
@@ -84,7 +100,7 @@ try {
   await commands('Runtime.enable');
   await commands('Emulation.setDeviceMetricsOverride', {width: 1100, height: 900, deviceScaleFactor: 1, mobile: false});
   await commands('Page.addScriptToEvaluateOnNewDocument', {source:
-    `localStorage.setItem('tw:addons', JSON.stringify({_:5,'2d-color-picker':{enabled:true},'better-color-picker':{enabled:true},'color-picker':{enabled:true}}));`});
+    `localStorage.setItem('tw:addons', JSON.stringify({_:5,'2d-color-picker':{enabled:true},'better-color-picker':{enabled:true},'color-picker':{enabled:true},'swap-local-global':{enabled:true}}));`});
   await commands('Page.navigate', {url: `${origin}/editor.html`});
   await until('!!window.GUI && !!window.webpackJsonpGUI', 'webpack runtime');
   await evaluate(`window.webpackJsonpGUI.push([['sa-verification'], {'sa-verification': function(module,exports,require){window.saVerifyRequire=require;}}, [['sa-verification']]]);
@@ -111,6 +127,10 @@ try {
   const capture = async name => {
     const {data} = await commands('Page.captureScreenshot', {format: 'png'});
     fs.writeFileSync(path.join(temporary, `${name}.png`), Buffer.from(data, 'base64'));
+    if (process.env.PICKER_SCREENSHOT_DIR) {
+      fs.mkdirSync(process.env.PICKER_SCREENSHOT_DIR,{recursive:true});
+      fs.writeFileSync(path.join(process.env.PICKER_SCREENSHOT_DIR,`${name}.png`),Buffer.from(data,'base64'));
+    }
   };
   assert.deepEqual(await radius('.blocklyDropDownDiv .sa-2dcolor-picker'), ['0px','0px','0px','0px']);
   assert.equal(await evaluate('document.querySelectorAll(".blocklyDropDownDiv .sa-color-picker-readout").length'), 3);
@@ -217,6 +237,8 @@ try {
   assert.ok(paintLayout.left>=17 && paintLayout.right>=17,JSON.stringify(paintLayout));
   await capture('paint-picker');
   console.log('Chrome: paint inputs/layout, native config, Ctrl, and both wheel axes passed.');
+  await verifyProjectBlockColors({evaluate, commands, until, pause, dimensions, mouse, capture});
+  assert.deepEqual(dialogs, [], 'editor actions do not open unexpected JavaScript alerts');
 } finally {
   if (commands) { try { await commands('Browser.close'); } catch {} }
   socket?.close();

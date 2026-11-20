@@ -14,6 +14,7 @@ import SliderPrompt from './slider-prompt.jsx';
 
 import {connect} from 'react-redux';
 import VM from 'scratch-vm';
+import getProjectBlockColors from '../lib/project-block-colors';
 
 const availableModes = opcode => (
     monitorModes.filter(t => {
@@ -56,6 +57,7 @@ class Monitor extends React.Component {
         };
     }
     componentDidMount () {
+        this.colorSubscription = getProjectBlockColors(this.props.vm).subscribe(() => this.forceUpdate());
         let rect;
 
         const isNum = num => typeof num === 'number' && !isNaN(num);
@@ -105,6 +107,7 @@ class Monitor extends React.Component {
         this.props.resizeMonitorRect(this.props.id, this.element.offsetWidth, this.element.offsetHeight);
     }
     componentWillUnmount () {
+        this.colorSubscription();
         this.props.removeMonitorRect(this.props.id);
     }
     handleDragEnd (e, {x, y}) {
@@ -226,6 +229,10 @@ class Monitor extends React.Component {
                     mode={this.props.mode}
                     targetId={this.props.targetId}
                     theme={this.props.theme}
+                    customColor={getProjectBlockColors(this.props.vm).get(
+                        isList ? 'lists' : 'variables', this.props.id)}
+                    customColors={getProjectBlockColors(this.props.vm).getEntry(
+                        isList ? 'lists' : 'variables', this.props.id)?.colors}
                     width={this.props.width}
                     onDragEnd={this.handleDragEnd}
                     onExport={isList ? this.handleExport : null}

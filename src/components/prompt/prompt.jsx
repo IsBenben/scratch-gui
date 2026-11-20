@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import {defineMessages, FormattedMessage} from 'react-intl';
+import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-intl';
 import PropTypes from 'prop-types';
 import React from 'react';
 
@@ -9,6 +9,7 @@ import Modal from '../../containers/modal.jsx';
 import styles from './prompt.css';
 import {SCRATCH_MAX_CLOUD_VARIABLES} from '../../lib/tw-cloud-limits.js';
 import isScratchDesktop from '../../lib/isScratchDesktop.js';
+import ProjectColorControls from '../project-color-input/project-color-controls.jsx';
 
 
 const messages = defineMessages({
@@ -38,6 +39,16 @@ const messages = defineMessages({
         description: 'A message that displays in a list modal when the stage is selected indicating ' +
             'that the list being created will available to all sprites.',
         id: 'gui.gui.listPromptAllSpritesMessage'
+    },
+    variableColor: {
+        defaultMessage: 'Variable color',
+        description: 'Color of blocks and monitors for this variable',
+        id: 'gui.prompt.variableColor'
+    },
+    listColor: {
+        defaultMessage: 'List color',
+        description: 'Color of blocks and monitors for this list',
+        id: 'gui.prompt.listColor'
     }
 });
 
@@ -54,7 +65,7 @@ const Packager = () => (
 
 const PromptComponent = props => (
     <Modal
-        className={styles.modalContent}
+        className={classNames(styles.modalContent, {[styles.colorModal]: props.showColor})}
         contentLabel={props.title}
         onRequestClose={props.onCancel}
         id="promptModal"
@@ -117,6 +128,19 @@ const PromptComponent = props => (
                                 />
                             </label>
                         </Box>}
+                    {props.showColor ? (
+                        <ProjectColorControls
+                            color={props.color}
+                            colors={props.colors}
+                            customColors={props.customColors}
+                            label={props.intl.formatMessage(
+                                props.showListMessage ? messages.listColor : messages.variableColor)}
+                            onColorChange={props.onColorChange}
+                            onPaletteChange={props.onPaletteChange}
+                            onResetTextColor={props.onResetTextColor}
+                            onToggleColors={props.onToggleColors}
+                        />
+                    ) : null}
                     {props.showCloudOption ?
                         <Box className={classNames(styles.cloudOption)}>
                             <label
@@ -134,6 +158,19 @@ const PromptComponent = props => (
                             </label>
                         </Box> : null}
                 </div> : null}
+            {props.showColor && !props.showVariableOptions ? (
+                <ProjectColorControls
+                    color={props.color}
+                    colors={props.colors}
+                    customColors={props.customColors}
+                    label={props.intl.formatMessage(
+                        props.showListMessage ? messages.listColor : messages.variableColor)}
+                    onColorChange={props.onColorChange}
+                    onPaletteChange={props.onPaletteChange}
+                    onResetTextColor={props.onResetTextColor}
+                    onToggleColors={props.onToggleColors}
+                />
+            ) : null}
 
             {props.cloudSelected && !props.isAddingCloudVariableScratchSafe && (
                 <Box className={styles.infoMessage}>
@@ -204,6 +241,15 @@ const PromptComponent = props => (
 );
 
 PromptComponent.propTypes = {
+    intl: intlShape,
+    color: PropTypes.string,
+    colors: PropTypes.objectOf(PropTypes.string).isRequired,
+    customColors: PropTypes.bool.isRequired,
+    onPaletteChange: PropTypes.objectOf(PropTypes.func).isRequired,
+    onResetTextColor: PropTypes.func.isRequired,
+    onToggleColors: PropTypes.func.isRequired,
+    showColor: PropTypes.bool,
+    onColorChange: PropTypes.func,
     isAddingCloudVariableScratchSafe: PropTypes.bool.isRequired,
     canAddCloudVariable: PropTypes.bool.isRequired,
     cloudSelected: PropTypes.bool.isRequired,
@@ -224,4 +270,4 @@ PromptComponent.propTypes = {
     title: PropTypes.string.isRequired
 };
 
-export default PromptComponent;
+export default injectIntl(PromptComponent);
