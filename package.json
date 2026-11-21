@@ -4,10 +4,10 @@
   "description": "Graphical User Interface for creating and running Scratch 3.0 projects",
   "author": "Massachusetts Institute of Technology",
   "license": "GPL-3.0",
-  "homepage": "https://github.com/LLK/scratch-gui#readme",
+  "homepage": "https://github.com/IsBenben/scratch-gui#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/LLK/scratch-gui.git"
+    "url": "https://github.com/IsBenben/scratch-gui.git"
   },
   "main": "./dist/scratch-gui.js",
   "packageManager": "pnpm@10.33.0",
@@ -91,7 +91,7 @@
     "redux-throttle": "0.1.1",
     "scratch-audio": "github:TurboWarp/scratch-audio#develop",
     "scratch-blocks": "github:TurboWarp/scratch-blocks#develop-builds",
-    "scratch-paint": "workspace:*",
+    "scratch-paint": "git+https://github.com/IsBenben/scratch-paint.git#2d620ec996de5928a67d49e7f6983598711a14f7",
     "scratch-render-fonts": "github:TurboWarp/scratch-render-fonts#master",
     "scratch-render": "github:TurboWarp/scratch-render#develop",
     "scratch-vm": "github:TurboWarp/scratch-vm#develop",

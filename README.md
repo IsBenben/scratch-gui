@@ -1,8 +1,19 @@
-scratch-gui modified for use in [TurboWarp](https://turbowarp.org/)
+IsBenben/scratch-gui is a fork of [TurboWarp/scratch-gui](https://github.com/TurboWarp/scratch-gui) with persistent project palettes and enhanced color pickers.
 
 ## Setup
 
-Use Node.js 24.18.0 and pnpm 10.33.0. Keep `scratch-gui` and `scratch-paint` in the same workspace directory:
+Use Node.js 24 and pnpm 10.33.0. Clone the workspace with its pinned GUI and paint submodules:
+
+```sh
+git clone --recurse-submodules https://github.com/IsBenben/scratch-editor-workspace.git
+cd scratch-editor-workspace
+pnpm install --frozen-lockfile
+pnpm --filter scratch-gui run prepare
+pnpm --filter scratch-gui run build
+pnpm --filter scratch-gui start
+```
+
+The directory layout is:
 
 ```text
 scratch-editor-workspace/
@@ -14,11 +25,11 @@ scratch-editor-workspace/
   .npmrc
 ```
 
-From the workspace directory, clone the paint repository and check out the pinned revision:
+If you cloned GUI separately, keep the two repositories as siblings and check out the paint revision declared by GUI:
 
 ```sh
-git clone --branch develop https://github.com/TurboWarp/scratch-paint.git scratch-paint
-git -C scratch-paint checkout 17be42c5d187110d96c45b6d26d6d41be2edcf1c
+git clone --branch develop https://github.com/IsBenben/scratch-paint.git scratch-paint
+git -C scratch-paint checkout "$(cat scratch-gui/scripts/workspace/paint-revision.txt)"
 node scratch-gui/scripts/setup-workspace.mjs
 pnpm install --frozen-lockfile
 pnpm --filter scratch-gui run prepare
@@ -28,11 +39,13 @@ pnpm --filter scratch-paint run test --runInBand
 pnpm --filter scratch-gui start
 ```
 
-The setup script applies the versioned paint patch and creates missing workspace configuration files using relative paths. GUI uses `scratch-paint: workspace:*`; there is no global link step. The GUI lockfile is the committed copy of the root workspace lockfile. After changing dependencies, run `pnpm install` from the workspace, then `node scratch-gui/scripts/sync-workspace.mjs` to sync the workspace lockfile, standalone paint lockfile, and patch.
+The setup script verifies the committed paint revision and creates missing workspace configuration files using relative paths. GUI declares `scratch-paint` as a pinned `git+https://github.com/IsBenben/scratch-paint.git` dependency. The root `pnpm-workspace.yaml` overrides that dependency with `workspace:*`, so development uses the local paint source. There is no global link step. The GUI lockfile is the committed copy of the root workspace lockfile.
+
+After committing paint changes, run `pnpm run sync` at the workspace root to update GUI's dependency and CI revision. After dependency changes, run `pnpm install`, then `pnpm run sync` again to copy the workspace lockfile and configuration templates. Paint maintains its standalone lockfile with `pnpm --dir scratch-paint --ignore-workspace install --lockfile-only` when its own dependencies change. Commit and push paint first, GUI second, and the workspace submodule references last.
 
 The prepare script downloads and verifies the microbit HEX asset and generates its import. If installation uses `--ignore-scripts`, run `pnpm -r rebuild --pending` and run prepare explicitly before building. The workspace allows the required `core-js`, `scratch-blocks`, and Canvas test dependency scripts. Cheerio is pinned for Enzyme compatibility, and paint declares its jsdom/Canvas test environment. Node uses the system CA store for dependency script downloads. The relative pnpm store path is configurable in the workspace `.npmrc`.
 
-`pnpm --filter scratch-gui test` also runs the project linter. Existing lint failures outside the picker changes are reported separately. Paint changes are reproducible from `scripts/workspace/scratch-paint.patch` against the revision in `scripts/workspace/paint-revision.txt`; CI recreates this sibling checkout and runs prepare, builds, and picker tests.
+`pnpm --filter scratch-gui test` also runs the project linter. Existing lint failures outside the picker changes are reported separately. Paint changes are committed directly to the IsBenben fork. CI checks out the commit in `scripts/workspace/paint-revision.txt`, creates the sibling workspace, and runs prepare, builds, and picker tests.
 
 After building, run `pnpm run test:pickers:browser` from GUI for the real browser regression checks. It uses an installed Chrome (set `CHROME_BINARY` if necessary), starts a temporary local server/profile, and removes its temporary files afterwards. Horizontal sliders accept either wheel axis with the same step; the 2D area scrolls saturation horizontally and brightness vertically. Ctrl snaps active values to steps of 5 while Better Color Picker is enabled. Shift + vertical wheel is also a saturation shortcut.
 

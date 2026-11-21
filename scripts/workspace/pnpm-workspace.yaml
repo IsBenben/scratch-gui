@@ -6,6 +6,7 @@ onlyBuiltDependencies:
   - scratch-blocks
   - canvas
 overrides:
+  scratch-paint: workspace:*
   webpack@4.47.0>terser-webpack-plugin: ^4.2.3
   enzyme>cheerio: 1.0.0-rc.12
 peerDependencyRules:

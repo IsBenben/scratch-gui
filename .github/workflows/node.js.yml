@@ -18,7 +18,7 @@ jobs:
       run: echo "revision=$(cat scratch-gui/scripts/workspace/paint-revision.txt)" >> "$GITHUB_OUTPUT"
     - uses: actions/checkout@v4
       with:
-        repository: TurboWarp/scratch-paint
+        repository: IsBenben/scratch-paint
         ref: ${{ steps.paint.outputs.revision }}
         path: scratch-paint
         persist-credentials: false
@@ -28,7 +28,7 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 24.18.0
-    - name: Configure workspace and apply paint patch
+    - name: Configure workspace
       run: node scratch-gui/scripts/setup-workspace.mjs
     - name: Cache pnpm store
       uses: actions/setup-node@v4

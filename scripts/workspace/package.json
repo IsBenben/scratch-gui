@@ -1,8 +1,15 @@
 {
   "name": "scratch-editor-workspace",
   "private": true,
+  "description": "pnpm workspace linking the Scratch GUI and paint editor forks",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IsBenben/scratch-editor-workspace.git"
+  },
   "packageManager": "pnpm@10.33.0",
   "scripts": {
+    "sync": "node scratch-gui/scripts/sync-workspace.mjs",
     "prepare": "pnpm --filter scratch-gui run prepare",
     "build": "pnpm --filter scratch-gui run build",
     "test": "pnpm --filter scratch-gui run test:unit && pnpm --filter scratch-paint run test --runInBand"
